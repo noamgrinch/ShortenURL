@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>ShortenURL</title>
+{% endblock %}
+
+{% block body %}
+
+<div class="container">
+<form action="/" method="POST" style="margin-top:60px;">
+  <div class="form-group">
+    <label>Please enter your URL</label>
+    <input type="text" class="form-control" name="URLinput" aria-describedby="URLHelp" placeholder="Enter URL">
+          {% for url in URLS %}
+                <label style="margin-top:20px;">Your new short URL:</label>
+                <input type="text" class="form-control" name="URLoutput" aria-describedby="URLHelp" value="localhost:5000/{{ url.shortURL }}">
+           {% endfor %}
+  </div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+</div>
+
+
+{% endblock %}
