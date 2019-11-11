@@ -7,7 +7,7 @@ import sqlite3
 
 server = Flask(__name__)
 server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///URL.db'
-server.config['SQLALCHEMY_BINDS'] = { 'RR': 'sqlite:///Redirections.db'}
+server.config['SQLALCHEMY_BINDS'] = { 'RR': 'sqlite:///Redirections.db' , 'BR' : 'sqlite:///BadRequests.db'} # RR = Redirections , BR = BadRequests
 DB = SQLAlchemy(server)
 
 
@@ -30,6 +30,14 @@ class Redirects(DB.Model):
     def __repr__(self):
         return '<Redirects %r>' % self.id
 
+
+class BadRequests(DB.Model):
+    id = DB.Column(DB.Integer, primary_key=True)
+    CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return '<BadR %b>' % self.id
+
 #in line 35 we are adding 1 to the ID because of the first entry. We encode the URL before it enters the DB.
 
 @server.route('/', methods=['GET', 'POST'])
@@ -48,7 +56,7 @@ def index():
             DB.session.commit()
             topost = []
             topost.append(newURL)
-            return render_template('result.html', URLS=topost)
+            return render_template('index.html', URLS=topost)
         except Exception as e: print(e)
 
     else:
@@ -72,7 +80,7 @@ def getRedStats():
         perHour= r[0]
         break;
 
-    result = DB.engine.execute("SELECT IFNULL(COUNT(Id),0),strftime ('%M',CreateDate) hour FROM Redirects GROUP BY strftime ('%M',CreateDate) ORDER BY 2 DESC")
+    result = DB.engine.execute("SELECT IFNULL(COUNT(Id),0),strftime ('%M',CreateDate) hour FROM Redirects GROUP BY strftime ('%M',CreateDate) ORDER BY 2 DESC") #query returns only when data occurred. need to find a way to return zeroes if empty.
 
     for r in result:
         print (r[0])
@@ -89,13 +97,19 @@ def getAmountLinks():
     return len(getLinks)
 
 
+def getBadRequests():
+
+    getBR = BadRequests.query.all()
+    return len(getBR)
+
 @server.route('/stats')
 def showStats():
 
     amount = getAmountLinks()
     redirectStats = getRedStats()
+    badrequests = getBadRequests()
 
-    return render_template("stats.html", amount=amount,redirects = redirectStats)
+    return render_template("stats.html", amount=amount,redirects = redirectStats, badrequests=badrequests)
 
 @server.route('/<short>')
 def redirectURL(short):
@@ -110,6 +124,11 @@ def redirectURL(short):
 
 @server.errorhandler(400)
 def badrequest(e):
+
+    newBadReq = BadRequests()
+    DB.session.add(newBadReq)
+    DB.session.commit()
+
     return "Error 400: Bad request."
 
 

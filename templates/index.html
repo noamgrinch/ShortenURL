@@ -9,15 +9,30 @@
 <div class="container">
 <form action="/" method="POST" style="margin-top:60px;">
   <div class="form-group">
-    <label>Please enter your URL</label>
-    <input type="text" class="form-control" name="URLinput" aria-describedby="URLHelp" placeholder="Enter URL">
+      {% if URLS %}
+            {% for url in URLS %}
+                <label style="margin-top:20px;">Your long URL:</label>
+                <input type="text" class="form-control" name="URLoutputlong" aria-describedby="URLHelp" value="{{ url.LongURL }}">
+            {% endfor %}
+      {% else %}
+
+            <label>Please enter your URL</label>
+            <input type="text" class="form-control" name="URLinput" aria-describedby="URLHelp" placeholder="Enter URL">
+
+      {% endif %}
           {% for url in URLS %}
                 <label style="margin-top:20px;">Your new short URL:</label>
-                <input type="text" class="form-control" name="URLoutput" aria-describedby="URLHelp" value="localhost:5000/{{ url.shortURL }}">
+                <input type="text" class="form-control" name="URLoutputshort" aria-describedby="URLHelp" value="localhost:5000/{{ url.shortURL }}">
            {% endfor %}
   </div>
-  <button type="submit" class="btn btn-primary">Submit</button>
-</form>
+    {% if URLS %}
+    </form>
+            <button onclick="redirectHome()" class="btn btn-primary">Back</button>
+    {% else %}
+            <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    {% endif %}
+
 
 </div>
 

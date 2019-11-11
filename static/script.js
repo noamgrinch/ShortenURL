@@ -1,6 +1,7 @@
 
-function redirect(){
+function redirectHome(){
 
-    window.location = "localhost:5000";
+     window.history.back();
+
 
 }
