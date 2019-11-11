@@ -2,15 +2,20 @@ from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import short_url
-import sqlite3
 
-
+############################################### DB configuration ###############################################
 server = Flask(__name__)
 server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///URL.db'
 server.config['SQLALCHEMY_BINDS'] = { 'RR': 'sqlite:///Redirections.db' , 'BR' : 'sqlite:///BadRequests.db'} # RR = Redirections , BR = BadRequests
 DB = SQLAlchemy(server)
 
 
+############################################### DB configuration  ###############################################
+
+
+
+
+############################################### Tables configuration ###############################################
 class URLs(DB.Model):
     __tablename__ = 'URLs'
     id = DB.Column(DB.Integer, primary_key=True)
@@ -41,7 +46,12 @@ class BadRequests(DB.Model):
     def __repr__(self):
         return '<BadR %b>' % self.id
 
-#in line 35 we are adding 1 to the ID because of the first entry. We encode the URL before it enters the DB.
+############################################### Tables configuration ###############################################
+
+
+
+
+#in line 61 we are adding 1 to the ID because of the first entry. We encode the URL before it enters the DB.
 
 @server.route('/', methods=['GET', 'POST'])
 def index():
@@ -63,8 +73,42 @@ def index():
         except Exception as e: print(e)
 
     else:
-       #URLS = URLs.query.order_by(URLs.CreateDate).all()
         return render_template('index.html')
+
+
+############################################### Routes ###############################################
+
+@server.route('/stats')
+def showStats():
+
+    amount = getAmountLinks()
+    redirectStats = getRedStats()
+    badrequests = getBadRequests()
+
+    return render_template("stats.html", amount=amount,redirectsDay = redirectStats[0],redirectsHour = redirectStats[1],redirectsMinute = redirectStats[2],errorsDay=badrequests[0],errorsHour=badrequests[1],errorsMinute=badrequests[2])
+
+@server.route('/<short>')
+def redirectURL(short):
+    newLink = URLs.query.filter_by(shortURL=short).first_or_404()
+
+    newLink.redirections = newLink.redirections + 1
+    newRed = Redirects(LongURL=newLink.LongURL, shortURL=newLink.shortURL)
+    DB.session.add(newRed)
+    DB.session.commit()
+
+    return redirect('https://' + newLink.LongURL)
+
+
+############################################### Routes ###############################################
+
+
+
+
+
+
+
+############################################### Stats functions ###############################################
+
 
 def getRedStats():
 
@@ -128,26 +172,12 @@ def getBadRequests():
 
     return errorsList
 
-@server.route('/stats')
-def showStats():
 
-    amount = getAmountLinks()
-    redirectStats = getRedStats()
-    badrequests = getBadRequests()
 
-    return render_template("stats.html", amount=amount,redirectsDay = redirectStats[0],redirectsHour = redirectStats[1],redirectsMinute = redirectStats[2],errorsDay=badrequests[0],errorsHour=badrequests[1],errorsMinute=badrequests[2])
+############################################### Stats functions ###############################################
 
-@server.route('/<short>')
-def redirectURL(short):
-    newLink = URLs.query.filter_by(shortURL=short).first_or_404()
 
-    newLink.redirections = newLink.redirections + 1
-    newRed = Redirects(LongURL=newLink.LongURL, shortURL=newLink.shortURL)
-    DB.session.add(newRed)
-    DB.session.commit()
-
-    return redirect('https://' + newLink.LongURL)
-
+############################################### Error Handlers ###############################################
 @server.errorhandler(400)
 def badrequest(e):
 
@@ -161,6 +191,11 @@ def badrequest(e):
 @server.errorhandler(404)
 def notfound(e):
     return "Error 404: Page was not found."
+
+
+
+############################################### Error Handlers ##############################################
+# start
 
 if __name__ == "__main__":
     server.run(debug=True)
