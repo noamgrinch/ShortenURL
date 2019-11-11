@@ -12,6 +12,7 @@ DB = SQLAlchemy(server)
 
 
 class URLs(DB.Model):
+    __tablename__ = 'URLs'
     id = DB.Column(DB.Integer, primary_key=True)
     CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
     LongURL = DB.Column(DB.String(150),nullable=False)
@@ -22,6 +23,7 @@ class URLs(DB.Model):
         return '<URLs %u>' % self.id
 
 class Redirects(DB.Model):
+    __tablename__ = 'Redirects'
     id = DB.Column(DB.Integer, primary_key=True)
     CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
     LongURL = DB.Column(DB.String(150), nullable=False)
@@ -32,6 +34,7 @@ class Redirects(DB.Model):
 
 
 class BadRequests(DB.Model):
+    __tablename__ = 'BadR'
     id = DB.Column(DB.Integer, primary_key=True)
     CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
 
@@ -66,29 +69,30 @@ def index():
 def getRedStats():
 
 
-    result = DB.engine.execute("SELECT COUNT(Id),strftime ('%D',CreateDate) hour FROM Redirects GROUP BY strftime ('%D',CreateDate)")
+    result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM Redirects WHERE CreateDate > datetime('now', '-24 hours')")
 
     for r in result:
         print (r[0])
         perDay = r[0]
         break;
 
-    result = DB.engine.execute("SELECT COUNT(Id),strftime ('%H',CreateDate) hour FROM Redirects GROUP BY strftime ('%H',CreateDate)")
+    result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM Redirects WHERE CreateDate > datetime('now', '-1 hours')")
 
     for r in result:
         print (r[0])
         perHour= r[0]
         break;
 
-    result = DB.engine.execute("SELECT IFNULL(COUNT(Id),0),strftime ('%M',CreateDate) hour FROM Redirects GROUP BY strftime ('%M',CreateDate) ORDER BY 2 DESC") #query returns only when data occurred. need to find a way to return zeroes if empty.
+    result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM Redirects WHERE CreateDate > datetime('now', '-1 minutes')")
 
     for r in result:
         print (r[0])
         perMinute= r[0]
         break;
 
-    redirectList = Redirects.query.all()
-    return (len(redirectList))
+    redirectList = [perDay, perHour, perMinute]
+
+    return redirectList
 
 
 def getAmountLinks():
@@ -99,8 +103,30 @@ def getAmountLinks():
 
 def getBadRequests():
 
-    getBR = BadRequests.query.all()
-    return len(getBR)
+    result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM BadR WHERE CreateDate > datetime('now', '-24 hours')")
+
+    for r in result:
+        print (r[0])
+        perDay = r[0]
+        break;
+
+    result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM BadR WHERE CreateDate > datetime('now', '-1 hours')")
+
+    for r in result:
+        print (r[0])
+        perHour= r[0]
+        break;
+
+    result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM BadR WHERE CreateDate > datetime('now', '-1 minutes')")
+
+    for r in result:
+        print (r[0])
+        perMinute= r[0]
+        break;
+
+    errorsList = [perDay, perHour, perMinute]
+
+    return errorsList
 
 @server.route('/stats')
 def showStats():
@@ -109,7 +135,7 @@ def showStats():
     redirectStats = getRedStats()
     badrequests = getBadRequests()
 
-    return render_template("stats.html", amount=amount,redirects = redirectStats, badrequests=badrequests)
+    return render_template("stats.html", amount=amount,redirectsDay = redirectStats[0],redirectsHour = redirectStats[1],redirectsMinute = redirectStats[2],errorsDay=badrequests[0],errorsHour=badrequests[1],errorsMinute=badrequests[2])
 
 @server.route('/<short>')
 def redirectURL(short):
