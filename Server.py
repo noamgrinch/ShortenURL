@@ -1,57 +1,19 @@
 from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
 import short_url
+from datetime import datetime
 
 ############################################### DB configuration ###############################################
 server = Flask(__name__)
 server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///URL.db'
 server.config['SQLALCHEMY_BINDS'] = { 'RR': 'sqlite:///Redirections.db' , 'BR' : 'sqlite:///BadRequests.db'} # RR = Redirections , BR = BadRequests
 DB = SQLAlchemy(server)
-
-
 ############################################### DB configuration  ###############################################
 
 
 
+#in line 31 we are adding 1 to the ID because of the first entry. We encode the URL before it enters the DB.
 
-############################################### Tables configuration ###############################################
-class URLs(DB.Model):
-    __tablename__ = 'URLs'
-    id = DB.Column(DB.Integer, primary_key=True)
-    CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
-    LongURL = DB.Column(DB.String(150),nullable=False)
-    shortURL = DB.Column(DB.String(150)) #Might be an error on generate, that's why it's not nullable=false.
-    redirections = DB.Column(DB.Integer, default=0)
-
-    def __repr__(self):
-        return '<URLs %u>' % self.id
-
-class Redirects(DB.Model):
-    __tablename__ = 'Redirects'
-    id = DB.Column(DB.Integer, primary_key=True)
-    CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
-    LongURL = DB.Column(DB.String(150), nullable=False)
-    shortURL = DB.Column(DB.String(150))
-
-    def __repr__(self):
-        return '<Redirects %r>' % self.id
-
-
-class BadRequests(DB.Model):
-    __tablename__ = 'BadR'
-    id = DB.Column(DB.Integer, primary_key=True)
-    CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
-
-    def __repr__(self):
-        return '<BadR %b>' % self.id
-
-############################################### Tables configuration ###############################################
-
-
-
-
-#in line 61 we are adding 1 to the ID because of the first entry. We encode the URL before it enters the DB.
 
 @server.route('/', methods=['GET', 'POST'])
 def index():
@@ -100,10 +62,6 @@ def redirectURL(short):
 
 
 ############################################### Routes ###############################################
-
-
-
-
 
 
 
@@ -195,6 +153,42 @@ def notfound(e):
 
 
 ############################################### Error Handlers ##############################################
+
+
+############################################### Tables configuration ###############################################
+class URLs(DB.Model):
+    __tablename__ = 'URLs'
+    id = DB.Column(DB.Integer, primary_key=True)
+    CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
+    LongURL = DB.Column(DB.String(150),nullable=False)
+    shortURL = DB.Column(DB.String(150)) #Might be an error on generate, that's why it's not nullable=false.
+    redirections = DB.Column(DB.Integer, default=0)
+
+    def __repr__(self):
+        return '<URLs %u>' % self.id
+
+class Redirects(DB.Model):
+    __tablename__ = 'Redirects'
+    id = DB.Column(DB.Integer, primary_key=True)
+    CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
+    LongURL = DB.Column(DB.String(150), nullable=False)
+    shortURL = DB.Column(DB.String(150))
+
+    def __repr__(self):
+        return '<Redirects %r>' % self.id
+
+
+class BadRequests(DB.Model):
+    __tablename__ = 'BadR'
+    id = DB.Column(DB.Integer, primary_key=True)
+    CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return '<BadR %b>' % self.id
+
+############################################### Tables configuration ###############################################
+
+
 # start
 
 if __name__ == "__main__":
