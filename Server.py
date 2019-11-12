@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect
 import short_url
 from DB import DB
 from Models import URLs, Redirects, BadRequests
+from Validator import Validator
 
 ############################################### DB configuration ###############################################
 server = Flask(__name__)
@@ -15,6 +16,8 @@ with server.app_context():
 ############################################### DB configuration  ###############################################
 
 
+validator = Validator() # validation object
+
 ############################################### Routes ###############################################
 
 
@@ -23,6 +26,10 @@ with server.app_context():
 def index():
     if request.method == 'POST':
         longUrl = request.form['URLinput']
+
+        if validator.validate(longUrl) is None: # validates that the url is in the correct format
+            return render_template('index.html', error='You have entered a malformed URL.')
+
         try:
             topost = []
             check = URLs.query.filter_by(LongURL=longUrl).first()
@@ -61,7 +68,7 @@ def redirectURL(short):
     DB.session.add(newRed)
     DB.session.commit()
 
-    return redirect('https://' + newLink.LongURL)
+    return redirect(newLink.LongURL)
 
 
 ############################################### Routes ###############################################
@@ -69,7 +76,7 @@ def redirectURL(short):
 
 ############################################### Procedures ###############################################
 
-#in line 81 we are adding 1 to the ID because of the first entry. We encode the URL before it enters the DB.
+#in line 88 we are adding 1 to the ID because of the first entry. We encode the URL before it enters the DB.
 def insertNewLink(longUrl):
 
     latest = URLs.query.order_by(URLs.CreateDate).all()

@@ -18,7 +18,9 @@
 
             <label>Please enter your URL</label>
             <input type="text" class="form-control" name="URLinput" aria-describedby="URLHelp" placeholder="Enter URL">
-
+            {% if error %}
+                <p>{{ error }}</p>
+            {% endif %}
       {% endif %}
           {% for url in URLS %}
                 <label style="margin-top:20px;">Your new short URL:</label>
@@ -27,7 +29,11 @@
   </div>
     {% if URLS %}
     </form>
-            <button onclick="redirectHome()" class="btn btn-primary">Back</button>
+    <form action="/" method="GET">
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Back</button>
+        </div>
+    </form>
     {% else %}
             <button type="submit" class="btn btn-primary">Submit</button>
     </form>
