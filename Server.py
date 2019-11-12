@@ -15,35 +15,33 @@ with server.app_context():
 ############################################### DB configuration  ###############################################
 
 
+############################################### Routes ###############################################
 
-#in line 31 we are adding 1 to the ID because of the first entry. We encode the URL before it enters the DB.
 
-
+# Main page.
 @server.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         longUrl = request.form['URLinput']
         try:
-            latest = URLs.query.order_by(URLs.CreateDate).all()
-            if not latest:
-                latestID = 1
-                newURL = URLs(LongURL=longUrl, shortURL=short_url.encode_url(latestID))
-            else:
-                latestID = latest[len(latest)-1].id
-                newURL = URLs(LongURL=longUrl, shortURL=short_url.encode_url(latestID+1))
-            DB.session.add(newURL)
-            DB.session.commit()
             topost = []
-            topost.append(newURL)
-            return render_template('index.html', URLS=topost)
-        except Exception as e: print(e)
+            check = URLs.query.filter_by(LongURL=longUrl).first()
+            if check is not None: #checks if URL already exsits.
+                topost.append(check)
+                return render_template('index.html', URLS=topost) #renders the page with a generated URL.
+            else:
+                topost = insertNewLink(longUrl)
+                return render_template('index.html', URLS=topost) #renders the page with a generated URL.
+
+        except Exception as e:
+            return notfound(e)
+
 
     else:
-        return render_template('index.html')
+        return render_template('index.html') #normal GET method.
 
 
-############################################### Routes ###############################################
-
+# Stats page. The methods inside generates the requested data from the database.
 @server.route('/stats')
 def showStats():
 
@@ -53,6 +51,7 @@ def showStats():
 
     return render_template("stats.html", amount=amount,redirectsDay = redirectStats[0],redirectsHour = redirectStats[1],redirectsMinute = redirectStats[2],errorsDay=badrequests[0],errorsHour=badrequests[1],errorsMinute=badrequests[2])
 
+# The redirect route. Our domain gets every call to it an redirects.
 @server.route('/<short>')
 def redirectURL(short):
     newLink = URLs.query.filter_by(shortURL=short).first_or_404()
@@ -67,6 +66,26 @@ def redirectURL(short):
 
 ############################################### Routes ###############################################
 
+
+############################################### Procedures ###############################################
+
+#in line 81 we are adding 1 to the ID because of the first entry. We encode the URL before it enters the DB.
+def insertNewLink(longUrl):
+
+    latest = URLs.query.order_by(URLs.CreateDate).all()
+    if not latest:
+        latestID = 1
+        newURL = URLs(LongURL=longUrl, shortURL=short_url.encode_url(latestID))
+    else:
+        latestID = latest[len(latest) - 1].id
+        newURL = URLs(LongURL=longUrl, shortURL=short_url.encode_url(latestID + 1))
+    DB.session.add(newURL)
+    DB.session.commit()
+    topost = []
+    topost.append(newURL)
+    return topost
+
+############################################### Procedures ###############################################
 
 
 ############################################### Stats functions ###############################################

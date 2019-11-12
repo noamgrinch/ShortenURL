@@ -12,7 +12,7 @@
       {% if URLS %}
             {% for url in URLS %}
                 <label style="margin-top:20px;">Your long URL:</label>
-                <input type="text" class="form-control" name="URLoutputlong" aria-describedby="URLHelp" value="{{ url.LongURL }}">
+                <input id="inputURL" type="text" class="form-control" name="URLoutputlong" aria-describedby="URLHelp" value="{{ url.LongURL }}">
             {% endfor %}
       {% else %}
 
