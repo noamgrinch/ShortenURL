@@ -1,13 +1,17 @@
 from flask import Flask, render_template, request, redirect
-from flask_sqlalchemy import SQLAlchemy
 import short_url
-from datetime import datetime
+from DB import DB
+from Models import URLs, Redirects, BadRequests
 
 ############################################### DB configuration ###############################################
 server = Flask(__name__)
 server.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///URL.db'
 server.config['SQLALCHEMY_BINDS'] = { 'RR': 'sqlite:///Redirections.db' , 'BR' : 'sqlite:///BadRequests.db'} # RR = Redirections , BR = BadRequests
-DB = SQLAlchemy(server)
+DB.init_app(server)
+
+
+with server.app_context():
+    DB.create_all()
 ############################################### DB configuration  ###############################################
 
 
@@ -74,21 +78,18 @@ def getRedStats():
     result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM Redirects WHERE CreateDate > datetime('now', '-24 hours')")
 
     for r in result:
-        print (r[0])
         perDay = r[0]
         break;
 
     result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM Redirects WHERE CreateDate > datetime('now', '-1 hours')")
 
     for r in result:
-        print (r[0])
         perHour= r[0]
         break;
 
     result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM Redirects WHERE CreateDate > datetime('now', '-1 minutes')")
 
     for r in result:
-        print (r[0])
         perMinute= r[0]
         break;
 
@@ -108,30 +109,24 @@ def getBadRequests():
     result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM BadR WHERE CreateDate > datetime('now', '-24 hours')")
 
     for r in result:
-        print (r[0])
         perDay = r[0]
         break;
 
     result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM BadR WHERE CreateDate > datetime('now', '-1 hours')")
 
     for r in result:
-        print (r[0])
         perHour= r[0]
         break;
 
     result = DB.engine.execute("SELECT COUNT(Id) as 'count' FROM BadR WHERE CreateDate > datetime('now', '-1 minutes')")
 
     for r in result:
-        print (r[0])
         perMinute= r[0]
         break;
 
     errorsList = [perDay, perHour, perMinute]
 
     return errorsList
-
-
-
 ############################################### Stats functions ###############################################
 
 
@@ -150,46 +145,5 @@ def badrequest(e):
 def notfound(e):
     return "Error 404: Page was not found."
 
-
-
 ############################################### Error Handlers ##############################################
 
-
-############################################### Tables configuration ###############################################
-class URLs(DB.Model):
-    __tablename__ = 'URLs'
-    id = DB.Column(DB.Integer, primary_key=True)
-    CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
-    LongURL = DB.Column(DB.String(150),nullable=False)
-    shortURL = DB.Column(DB.String(150)) #Might be an error on generate, that's why it's not nullable=false.
-    redirections = DB.Column(DB.Integer, default=0)
-
-    def __repr__(self):
-        return '<URLs %u>' % self.id
-
-class Redirects(DB.Model):
-    __tablename__ = 'Redirects'
-    id = DB.Column(DB.Integer, primary_key=True)
-    CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
-    LongURL = DB.Column(DB.String(150), nullable=False)
-    shortURL = DB.Column(DB.String(150))
-
-    def __repr__(self):
-        return '<Redirects %r>' % self.id
-
-
-class BadRequests(DB.Model):
-    __tablename__ = 'BadR'
-    id = DB.Column(DB.Integer, primary_key=True)
-    CreateDate = DB.Column(DB.DateTime, default=datetime.utcnow)
-
-    def __repr__(self):
-        return '<BadR %b>' % self.id
-
-############################################### Tables configuration ###############################################
-
-
-# start
-
-if __name__ == "__main__":
-    server.run(debug=True)
