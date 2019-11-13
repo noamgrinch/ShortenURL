@@ -24,7 +24,7 @@
       {% endif %}
           {% for url in URLS %}
                 <label style="margin-top:20px;">Your new short URL:</label>
-                <input type="text" class="form-control" name="URLoutputshort" aria-describedby="URLHelp" value="172.105.88.150{{ url.shortURL }}">
+                <input type="text" class="form-control" name="URLoutputshort" aria-describedby="URLHelp" value="172.105.88.150/{{ url.shortURL }}">
            {% endfor %}
   </div>
     {% if URLS %}
